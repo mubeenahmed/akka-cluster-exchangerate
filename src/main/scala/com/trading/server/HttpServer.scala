@@ -15,12 +15,11 @@ object HttpServer {
   def start(interface: String, port: Int)
            (implicit actorSystem: ActorSystem[_]): Unit =
   {
-    val sharding = ClusterSharding(actorSystem)
     implicit val ec = actorSystem.executionContext
 
     val router = new Router()
     val binding = Http().newServerAt(interface, port)
-      .bind(router.apply(sharding))
+      .bind(router.apply())
 
     binding.onComplete {
       case Success(value) =>

@@ -6,6 +6,7 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
+import org.slf4j.LoggerFactory
 
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
@@ -38,6 +39,8 @@ case class CurrentState(entityId: UUID, rate: Option[Rate]) extends Event
 
 object ExchangeRate
 {
+
+  val log = LoggerFactory.getLogger(getClass)
 
   val EntityKey: EntityTypeKey[Command] =
     EntityTypeKey[Command]("ExchangeRate")
@@ -78,6 +81,7 @@ object ExchangeRate
             StatusReply.Error(s"Error: no currency supported"))
         }
       case AddRate(rate, replyTo) =>
+        log.info(s"Rate is started adding ${rate.entityId}")
         if(!state.hasItem(rate.entityId)) {
           Effect
             .persist[Event, State](RateAdded(rate.entityId, rate.base, rate.quote, rate.rate))
@@ -102,6 +106,7 @@ object ExchangeRate
       case rate: RateUpdated =>
         state.update(Rate(rate.entityId, rate.base, rate.quote, rate.rate))
       case rate: RateAdded =>
+        log.info(s"Rate is storing added event ${rate.entityId}")
         state.add(Rate(rate.entityId, rate.base, rate.quote, rate.rate))
     }
   }

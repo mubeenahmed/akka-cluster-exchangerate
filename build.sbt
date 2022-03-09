@@ -9,6 +9,23 @@ val AkkaVersion = "2.6.18"
 val AkkaHttpVersion = "10.2.7"
 val AkkaManagementVersion = "1.1.3"
 
+
+Compile / scalacOptions ++= Seq(
+  "-target:11",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Xlog-reflective-calls",
+  "-Xlint")
+Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
+
+Test / parallelExecution := false
+Test / testOptions += Tests.Argument("-oDF")
+Test / logBuffered := false
+
+run / fork := true
+Global / cancelable := false // ctrl-c
+
 libraryDependencies ++= Seq(
 
   "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,

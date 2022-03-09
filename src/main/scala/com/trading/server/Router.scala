@@ -3,7 +3,7 @@ package com.trading.server
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.cluster.sharding.typed.ShardingEnvelope
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef, EntityTypeKey}
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.{Directives, RequestContext, RouteResult}
 import akka.http.scaladsl.server.Directives.{complete, path}
@@ -38,47 +38,40 @@ class Router(implicit val actorSystem: ActorSystem[_]) {
   private val jpy = Currency("Japanese Yen", "JPY")
   val rate = Rate(uuid, gbp, usd, 1.36)
 
-  val TypeKey = EntityTypeKey[Command]("Exchange")
-
-  val psEntities: ActorRef[ShardingEnvelope[Command]] =
-    ClusterSharding(actorSystem).init(Entity(TypeKey)
-    (createBehavior = ctx => ExchangeRate(ctx.entityId)))
-  val psCommandActor: ActorRef[ShardingEnvelope[Command]] = psEntities
-
+  val TypeKey = EntityTypeKey[Command]("ExchangeRate")
   implicit val ec = actorSystem.executionContext
 
-  def apply(sharding: ClusterSharding)(implicit context: ActorSystem[_]): RequestContext => Future[RouteResult] = {
+  def apply()(implicit context: ActorSystem[_]): RequestContext => Future[RouteResult] = {
+    val sharding = ClusterSharding(context)
+
     path("add") {
       post {
         val entityId = UUID.randomUUID().toString
-        complete(StatusCodes.OK, addRates(AddRateRequest(entityId, gbp, usd, 1.40d)))
+        val psCommandActor: EntityRef[Command] = sharding.entityRefFor(TypeKey, entityId)
+        complete(StatusCodes.OK, addRates(psCommandActor, AddRateRequest(entityId, gbp, usd, 1.40d)))
       }
     } ~
     path("get") {
       parameters("entityId") { entityId =>
-        complete(StatusCodes.OK, queryRates(entityId))
+        val psCommandActor: EntityRef[Command] = sharding.entityRefFor(TypeKey, entityId)
+        complete(StatusCodes.OK, queryRates(psCommandActor, entityId))
       }
     }
   }
 
-  def addRates(req: AddRateRequest): Future[String] = {
+  def addRates(psCommandActor: EntityRef[Command], req: AddRateRequest): Future[String] = {
     implicit val timeout = Timeout(5.seconds)
     val result = psCommandActor ? { ref : ActorRef[StatusReply[RateAdded]] =>
-      ShardingEnvelope(
-        req.entityId,
-        AddRate(
-          Rate(UUID.fromString(req.entityId), req.base, req.quote, req.rate), ref))
+      AddRate(
+        Rate(UUID.fromString(req.entityId), req.base, req.quote, req.rate), ref)
     }
     handleResponse(req, result)
   }
 
-  def queryRates(entityId: String): Future[String] = {
+  def queryRates(psCommandActor: EntityRef[Command], entityId: String): Future[String] = {
     implicit val timeout = Timeout(5.seconds)
     val result = psCommandActor ? { ref: ActorRef[StatusReply[CurrentState]] =>
-      ShardingEnvelope(
-        entityId,
-        GetRate(UUID.fromString(entityId), ref)
-      )
+      GetRate(UUID.fromString(entityId), ref)
     }
     result.map {
       case rate: StatusReply[CurrentState] => s"${rate.getValue}"

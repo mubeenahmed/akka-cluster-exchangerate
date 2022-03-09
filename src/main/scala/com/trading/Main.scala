@@ -12,11 +12,10 @@ import com.trading.trader.TraderPurchases
 import com.typesafe.config.ConfigFactory
 
 object Main extends App {
+  var nodeConfig = args(0)
+  val config = ConfigFactory.load(nodeConfig)
+  implicit val system = ActorSystem[Nothing](Behaviors.empty, "ExchangerService", config)
 
-  val config = ConfigFactory.load()
-  implicit val system = ActorSystem[Nothing](Behaviors.empty, "ClusterSystem", config)
-
-  val TypeKey = EntityTypeKey[Command]("Exchanger")
   AkkaManagement(system).start()
   ClusterBootstrap(system).start()
 
