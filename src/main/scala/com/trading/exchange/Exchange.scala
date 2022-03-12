@@ -6,6 +6,7 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
+import com.trading.server.MsgSerializerMaker
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
@@ -32,7 +33,7 @@ object State {
   val empty = State(rates = Map.empty)
 }
 
-trait Event
+trait Event extends MsgSerializerMaker
 case class RateUpdated(entityId: UUID, base: Currency, quote: Currency, rate: Double) extends Event
 case class RateAdded(entityId: UUID, base: Currency, quote: Currency, rate: Double) extends Event
 case class CurrentState(entityId: UUID, rate: Option[Rate]) extends Event

@@ -1,12 +1,9 @@
 package com.trading.server
 
 import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.cluster.sharding.typed.ShardingEnvelope
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
-import akka.cluster.sharding.typed.scaladsl.{Entity, EntityTypeKey}
 import akka.http.scaladsl.Http
-import com.trading.trader.{Command, TraderPurchases}
 
+import scala.io.StdIn
 import scala.util.{Failure, Success}
 
 object HttpServer {
@@ -27,6 +24,12 @@ object HttpServer {
       case Failure(exception) =>
         actorSystem.log.error(s"Error: ${exception.getMessage}")
     }
+
+    StdIn.readLine() // let it run until user presses return
+//    binding
+//      .flatMap(_.unbind()) // trigger unbinding from the port
+//      .onComplete(_ => actorSystem.terminate()) // and shutdown when done
+
   }
 
 }

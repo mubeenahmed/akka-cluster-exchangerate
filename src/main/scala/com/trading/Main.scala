@@ -6,7 +6,7 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import akka.cluster.typed.Cluster
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import com.trading.exchange.{Command, ExchangeRate}
+import com.trading.exchange.{Command, DBConfiguration, ExchangeRate}
 import com.trading.server.HttpServer
 import com.trading.trader.TraderPurchases
 import com.typesafe.config.ConfigFactory
@@ -21,6 +21,8 @@ object Main extends App {
 
   ExchangeRate.init(system)
   TraderPurchases.init(system)
+
+  val dbConfiguration = new DBConfiguration()
 
   val httpInterface = config.getString("http.interface")
   val httpPort = config.getInt("http.port")

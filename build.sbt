@@ -49,6 +49,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
 
   "com.typesafe.akka" %% "akka-persistence" % AkkaVersion,
+  "com.lightbend.akka" %% "akka-persistence-jdbc" % "5.0.4",
+  "mysql" % "mysql-connector-java" % "8.0.28",
+
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test,
   "org.scalatest" %% "scalatest" % "3.2.10" % Test
