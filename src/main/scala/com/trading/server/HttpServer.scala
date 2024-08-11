@@ -26,9 +26,9 @@ object HttpServer {
     }
 
     StdIn.readLine() // let it run until user presses return
-//    binding
-//      .flatMap(_.unbind()) // trigger unbinding from the port
-//      .onComplete(_ => actorSystem.terminate()) // and shutdown when done
+      .binding
+      .flatMap(_.unbind()) // trigger unbinding from the port
+      .onComplete(_ => actorSystem.terminate()) // and shutdown when done
 
   }
 
